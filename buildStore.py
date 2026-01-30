@@ -7,6 +7,7 @@ from pathlib import Path
 OUTPUT_DIR = "release"
 OUTPUT_FILE = "sudoFrameworks.json"
 INPUT_FILE = "data/quillFrameworks.csv"
+VERSION = "v.0.1.0"
 
 
 @dataclass
@@ -82,7 +83,10 @@ def output_file(entries: list[FramworkEntry]):
     for each in entries:
         frameworks.append(each.to_dict())
 
-    output_json = {"frameworks": frameworks}
+    output_json = {
+        "version": VERSION,
+        "frameworks": frameworks,
+    }
 
     # output file to disk
     output_file = path / OUTPUT_FILE
