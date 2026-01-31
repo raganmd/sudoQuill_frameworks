@@ -5,7 +5,7 @@ on:
       - main
 
 jobs:
-  Build_tox:
+  Generate-frameworks-releases:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -14,17 +14,34 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Get commit count since last tag
-        id: commit_count_step
+      - name: Get latest tag and calculate new version
+        id: set_version
         run: |
-          LAST_TAG=$(git describe --tags --abbrev=0)
-          # If no previous tag exists, count from the beginning
-          if [ -z "$LAST_TAG" ]; then
-              COUNT=$(git rev-list --count HEAD)
+          # Fetch all tags
+          git fetch --tags
+
+          # Get the latest semantic version tag
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing SemVer tag found, starting with v1.0.0"
+            NEW_VERSION="v1.0.0"
           else
-              COUNT=$(git rev-list --count $LAST_TAG..HEAD)
+            echo "Latest tag found: $LATEST_TAG"
+            # Remove 'v' prefix for version manipulation
+            CURRENT_VERSION=${LATEST_TAG:1}
+            MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+            MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+
+            # Append commit count as a build metadata (optional, based on your need for a unique ID)
+            # You might use the count since the last tag here
+            COMMIT_COUNT=$(git rev-list HEAD ^$LATEST_TAG --count)
+            NEW_VERSION="v$MAJOR.$MINOR.$PATCH+$COMMIT_COUNT"
+
+            # If you just want a clean SemVer tag without commit count metadata:
+            # NEW_VERSION="v$MAJOR.$MINOR.$COMMIT_COUNT"
           fi
-          echo "COMMIT_COUNT=$COUNT" >> $GITHUB_OUTPUT
+
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up Python
         uses: actions/setup-python@v5 # Use the latest version
@@ -34,11 +51,13 @@ jobs:
       - name: Build SudoFrameworks
         run: python main.py
 
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref_name }}
-          files: ./release/sudoFrameworks.json
+          files: ./release/* # Upload all files in the build directory
+          tag_name: ${{ steps.set_version.outputs.NEW_VERSION }}
+          name: Release ${{ steps.set_version.outputs.NEW_VERSION }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Use the default GITHUB_TOKEN
