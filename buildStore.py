@@ -58,7 +58,11 @@ class FramworkEntry:
 
 def read_file() -> list[FramworkEntry]:
     entries = []
-    with open(INPUT_FILE, newline="") as csvFile:
+    with open(
+        INPUT_FILE,
+        "r",
+        newline="",
+    ) as csvFile:
         frameworkReader = csv.reader(csvFile, delimiter=",")
         # skip header row
         next(frameworkReader)
