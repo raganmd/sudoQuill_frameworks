@@ -69,7 +69,7 @@ def read_file() -> list[FramworkEntry]:
         for eachRow in frameworkReader:
             entry = FramworkEntry.from_row(eachRow)
             entries.append(entry)
-
+    print("list of farmeworks generated")
     return entries
 
 
@@ -94,12 +94,15 @@ def output_file(entries: list[FramworkEntry]):
 
     # output file to disk
     output_file = path / OUTPUT_FILE
+    print(f"writing {output_file} to disk")
     with open(output_file, "w") as json_file:
         json.dump(output_json, json_file)
 
 
 def main() -> None:
+    print(f"reading {INPUT_FILE}")
     entries = read_file()
+    print("outputting file to disk")
     output_file(entries)
 
 

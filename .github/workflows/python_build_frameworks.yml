@@ -54,7 +54,7 @@ jobs:
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v1
         with:
-          files: release/* # Upload all files in the build directory
+          files: release/sudoFrameworks.json # Upload all files in the build directory
           tag_name: ${{ steps.set_version.outputs.NEW_VERSION }}
           name: Release ${{ steps.set_version.outputs.NEW_VERSION }}
           draft: false
